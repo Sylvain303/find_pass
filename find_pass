@@ -1,3 +1,45 @@
 #!/bin/bash
-find /home/sylvain/.password-store/ -type f | grep -i --color=always "$1" \
-	| sed -e 'p;s@/home/sylvain/.password-store/@#  @' -e 's/\.gpg$//'
+#
+# Usage: find_pass REGEXP
+#
+# search into your local password-store filesystem for an entry
+# matching the regexp. The regexp is filterd with sed, highlithed with grep.
+# If only one entry is found, it is passed to pass show -c to be read put
+# the clipboard.
+
+main() {
+    local tmp=~/tmp/find_pass.tmp
+    # details:
+    # sed: extract result with sed, converting to pass entry format
+    # tee: store in a tmp file
+    # grep: highlithing
+    find ~/.password-store/ -type f \
+        | sed -n -e "/$1/ {
+            # print the result as is
+            p
+            s@${HOME}/.password-store/@#  @
+            s/\\.gpg\$//
+            # print the pass entry format prefixed by '#  '
+            p
+            }" \
+        | tee $tmp \
+        | grep -i --color=always "$1"
+
+    # check in only one match (2 lines)
+    if [[ "$(wc -l <$tmp)" -eq 2 ]]
+    then
+        local pass="$(sed -n -e '$ s/^# \+// p' $tmp)"
+        pass show -c "$pass"
+    fi
+
+    rm -f $tmp
+}
+
+# sourcing code detection, if code is sourced for debug purpose,
+# main is not executed.
+[[ $0 != "$BASH_SOURCE" ]] && sourced=1 || sourced=0
+if  [[ $sourced -eq 0 ]]
+then
+    # pass positional argument as is
+    main "$@"
+fi
