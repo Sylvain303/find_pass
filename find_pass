@@ -1,0 +1,3 @@
+#!/bin/bash
+find /home/sylvain/.password-store/ -type f | grep -i --color=always "$1" \
+	| sed -e 'p;s@/home/sylvain/.password-store/@#  @' -e 's/\.gpg$//'
