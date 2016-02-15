@@ -25,10 +25,21 @@ main() {
         | tee $tmp \
         | grep -i --color=always "$1"
 
+    local pass=""
+
     # check in only one match (2 lines)
     if [[ "$(wc -l <$tmp)" -eq 2 ]]
     then
-        local pass="$(sed -n -e '$ s/^# \+// p' $tmp)"
+        pass="$(sed -n -e '$ s/^# \+// p' $tmp)"
+    elif [[ $(grep " web/" $tmp | wc -l) -eq 1 ]]
+    then
+        # check if only one
+        pass="$(sed -n -e '/^# \+web/ s@^# \+@@ p' $tmp)"
+    fi
+
+    if [[ ! -z "$pass" ]]
+    then
+        echo "reading '$pass'"
         pass show -c "$pass"
     fi
 
