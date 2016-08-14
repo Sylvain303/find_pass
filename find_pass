@@ -8,13 +8,14 @@
 # the clipboard.
 
 main() {
+    local pattern="$1"
     local tmp=~/tmp/find_pass.tmp
     # details:
     # sed: extract result with sed, converting to pass entry format
     # tee: store in a tmp file
     # grep: highlithing
     find ~/.password-store/ -type f \
-        | sed -n -e "/$1/ {
+        | sed -n -e "/$pattern/ {
             # print the result as is
             p
             s@${HOME}/.password-store/@#  @
@@ -23,7 +24,7 @@ main() {
             p
             }" \
         | tee $tmp \
-        | grep -i --color=always "$1"
+        | grep -i --color=always -- "$pattern"
 
     local pass=""
 
