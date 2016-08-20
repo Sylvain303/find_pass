@@ -9,6 +9,9 @@
 
 main() {
     local pattern="$1"
+    # remove / from pattern
+    pattern=${pattern//\//.}
+
     local tmp=~/tmp/find_pass.tmp
     # details:
     # sed: extract result with sed, converting to pass entry format
@@ -42,6 +45,8 @@ main() {
     then
         echo "reading '$pass'"
         pass show -c "$pass"
+        # also display user name
+        pass show "$pass" | grep --color -Ei "^(user|email)"
     fi
 
     rm -f $tmp
