@@ -10,7 +10,7 @@
 main() {
     local pattern="$1"
     # remove / from pattern
-    pattern=${pattern//\//.}
+    sed_pattern=${pattern//\//\\/}
 
     local tmp=~/tmp/find_pass.tmp
     # details:
@@ -18,7 +18,7 @@ main() {
     # tee: store in a tmp file
     # grep: highlithing
     find ~/.password-store/ -type f \
-        | sed -n -e "/$pattern/ {
+        | sed -n -e "/$sed_pattern/ {
             # print the result as is
             p
             s@${HOME}/.password-store/@#  @
