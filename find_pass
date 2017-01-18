@@ -12,11 +12,13 @@ main() {
     # remove / from pattern
     sed_pattern=${pattern//\//\\/}
 
+    # use a $HOME temporary file
     local tmp=~/tmp/find_pass.tmp
+
     # details:
     # sed: extract result with sed, converting to pass entry format
     # tee: store in a tmp file
-    # grep: highlithing
+    # grep: highlithing
     find ~/.password-store/ -type f \
         | sed -n -e "/$sed_pattern/ {
             # print the result as is
@@ -44,9 +46,28 @@ main() {
     if [[ ! -z "$pass" ]]
     then
         echo "reading '$pass'"
+        # pass will copy pass into clipboard (PRIMARY)
         pass show -c "$pass"
-        # also display user name
-        pass show "$pass" | grep --color -Ei "^(user|email)"
+        regexp1="user|email"
+        regexp2="^($regexp1|url)"
+        # we copy email or user to SECONDARY clipboard (middle mouse button)
+        pass show "$pass" | grep -Ei "^($regexp1)" > $tmp
+        # ${var//pat/subst} substitute | to space
+        for r in ${regexp1//\|/ }
+        do
+          echo search $r
+          # GNU sed I case insensitive
+          val=$(sed -n -e "/^$r/I s/^[^:]\\+: *//I p" $tmp)
+          if [[ ! -z "$val" ]]
+          then
+            echo -e "found \033[31;1m$r\033[0m copied to SECONDARY"
+            echo -n $val | xclip -selection XA_SECONDARY
+            break
+          fi
+        done
+
+        # also display user name, regexp2 is anchored
+        pass show "$pass" | grep --color -Ei "$regexp2"
     fi
 
     rm -f $tmp
