@@ -50,21 +50,27 @@ main() {
         pass show -c "$pass"
         regexp1="user|email"
         regexp2="^($regexp1|url)"
-        # we copy email or user to SECONDARY clipboard (middle mouse button)
+
+        # We copy email or user to SECONDARY clipboard (middle mouse button)
+        # This grep store matching lines in the file order.
+        # We look at the same pattern in the line order.
+        # Reorder line to match first entry for your need.
         pass show "$pass" | grep -Ei "^($regexp1)" > $tmp
-        # ${var//pat/subst} substitute | to space
-        for r in ${regexp1//\|/ }
+
+        old_ifs=$IFS
+        IFS=$'\n'
+        for l in $(cat $tmp)
         do
-          echo search $r
-          # GNU sed I case insensitive
-          val=$(sed -n -e "/^$r/I s/^[^:]\\+: *//I p" $tmp)
+          # GNU sed: I case insensitive, ! not match
+          val=$(sed -n -e "/^#/ ! { s/^[^:]\\+: *//I p; }" $tmp)
           if [[ ! -z "$val" ]]
           then
-            echo -e "found \033[31;1m$r\033[0m copied to SECONDARY"
+            echo -e "found \033[31;1m$val\033[0m copied to SECONDARY"
             echo -n $val | xclip -selection XA_SECONDARY
             break
           fi
         done
+        IFS=$old_ifs
 
         # also display user name, regexp2 is anchored
         pass show "$pass" | grep --color -Ei "$regexp2"
