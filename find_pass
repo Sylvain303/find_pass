@@ -57,16 +57,17 @@ main() {
         # Reorder line to match first entry for your need.
         pass show "$pass" | grep -Ei "^($regexp1)" > $tmp
 
+        # loop over lines
         old_ifs=$IFS
         IFS=$'\n'
         for l in $(cat $tmp)
         do
           # GNU sed: I case insensitive, ! not match
-          val=$(sed -n -e "/^#/ ! { s/^[^:]\\+: *//I p; }" $tmp)
+          val=$(echo "$l" | sed -n -e "/^#/ ! { s/^[^:]\\+: *//I p; }")
           if [[ ! -z "$val" ]]
           then
-            echo -e "found \033[31;1m$val\033[0m copied to SECONDARY"
-            echo -n $val | xclip -selection XA_SECONDARY
+            echo -e "found '\033[31;1m$val\033[0m' copied to SECONDARY"
+            echo -n "$val" | xclip -selection XA_SECONDARY
             break
           fi
         done
