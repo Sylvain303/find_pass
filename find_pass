@@ -5,7 +5,8 @@
 # search into your local password-store filesystem for an entry
 # matching the regexp. The regexp is filterd with sed, highlithed with grep.
 # If only one entry is found, it is passed to pass show -c to be read put
-# the clipboard.
+# the clipboard. First User or Email field is copied in SECONDARY clipboard
+# (middle mouse click on Linux)
 
 main() {
     local pattern="$1"
