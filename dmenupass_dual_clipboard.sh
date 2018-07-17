@@ -7,12 +7,16 @@
 # This script interract with your local password-store filesystem via dmenu.
 # It will get both user/email and password from your pass entries.
 #
-# It use clipit as clipboard manager so the selected enrty is also in the
+# Rows are matched using regexp.
+#
+# It uses clipit as clipboard manager so the selected enrty is also in the
 # clipboard history.
 #
 # - push entry to clipboard history
 # - copy user/email to SECONDARY
 # - copy password to PRIMARY
+# - if matched record hold an exec: row, the code is executed and the result
+#   pushed to clipboard
 
 # pass our entries files to dmenu
 # result stored in PASSWORD_ENTRY
@@ -59,9 +63,11 @@ load_entry_to_clipboard() {
     local old_ifs=$IFS
     local l
     IFS=$'\n'
-    for l in $(pass show "$pass" | grep -Ei "^($regexp1)")
+    local raw_entry="$(pass show "$pass")"
+    # match extra entries
+    for l in $(grep -Ei "^($regexp1)" <<< "$raw_entry")
     do
-      # GNU sed: I case insensitive, ! not match
+      # GNU sed: 'I': case insensitive, ! not match
       val=$(echo "$l" | sed -n -e "/^#/ ! { s/^[^:]\\+: *//I p; }")
       if [[ ! -z "$val" ]]
       then
@@ -71,9 +77,20 @@ load_entry_to_clipboard() {
     done
     IFS=$old_ifs
 
-    # last action
-    # pass will copy pass into clipboard (PRIMARY)
-    pass show -c "$pass"
+    # last action to the clipboard
+
+    # detect exec:
+    local exec_cmd=$(awk -F '[: ]+' \
+      'BEGIN{IGNORECASE = 1;} $1 == "exec" {sub("exec: +","",$0); print $0}' \
+       <<< "$raw_entry")
+    if [[ -n $exec_cmd ]]
+    then
+      #echo "$exec_cmd"
+      eval "$exec_cmd" |  clipit
+    else
+      # pass will copy pass into clipboard (PRIMARY)
+      pass show -c "$pass"
+    fi
 }
 
 # sourcing code detection, if code is sourced for debug purpose,
