@@ -7,6 +7,9 @@
 # If only one entry is found, it is passed to pass show -c to be read put
 # the clipboard. First User or Email field is copied in SECONDARY clipboard
 # (middle mouse click on Linux)
+#
+# to find gpg pattern in password record use:
+#   find_pass gpg | grep '#'
 
 main() {
     local pattern="$1"
@@ -63,7 +66,7 @@ main() {
         IFS=$'\n'
         for l in $(cat $tmp)
         do
-          # GNU sed: I case insensitive, ! not match
+          # GNU sed: I flag for case insensitive, ! not match
           val=$(echo "$l" | sed -n -e "/^#/ ! { s/^[^:]\\+: *//I p; }")
           if [[ ! -z "$val" ]]
           then

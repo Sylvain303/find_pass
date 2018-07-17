@@ -44,10 +44,10 @@ main() {
 }
 
 load_entry_to_clipboard() {
-    local pass="$1"
+    local pass_entry="$1"
 
     # copy entry matched to clipboard
-    echo "pass show $pass" | clipit
+    echo "pass show $pass_entry" | clipit
 
     # looking for extra data
     local regexp1="user|email"
@@ -63,7 +63,7 @@ load_entry_to_clipboard() {
     local old_ifs=$IFS
     local l
     IFS=$'\n'
-    local raw_entry="$(pass show "$pass")"
+    local raw_entry="$(pass show "$pass_entry")"
     # match extra entries
     for l in $(grep -Ei "^($regexp1)" <<< "$raw_entry")
     do
@@ -79,17 +79,21 @@ load_entry_to_clipboard() {
 
     # last action to the clipboard
 
-    # detect exec:
-    local exec_cmd=$(awk -F '[: ]+' \
-      'BEGIN{IGNORECASE = 1;} $1 == "exec" {sub("exec: +","",$0); print $0}' \
-       <<< "$raw_entry")
-    if [[ -n $exec_cmd ]]
+    # detect oathtool
+    local oathtool=$(
+        awk 'BEGIN{IGNORECASE = 1;} $1 == "oathtool:" {print $2}' \
+        <<< "$raw_entry")
+    if [[ -n $oathtool && $oathtool == true ]]
     then
-      #echo "$exec_cmd"
-      eval "$exec_cmd" |  clipit
+      local auth_code=$(echo "$raw_entry" | head -1)
+      local two_factor_code=$(oathtool --totp --base32 "$auth_code")
+      if [[ -n $two_factor_code ]]
+      then
+        echo "$two_factor_code" | clipit
+      fi
     else
       # pass will copy pass into clipboard (PRIMARY)
-      pass show -c "$pass"
+      pass show -c "$pass_entry"
     fi
 }
 
