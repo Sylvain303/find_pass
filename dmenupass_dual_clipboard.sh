@@ -4,13 +4,14 @@
 #
 # See Also: https://git.zx2c4.com/password-store/tree/contrib/dmenu
 #
-# This script interract with your local password-store filesystem via dmenu.
+# This script interract with your local password-store filesystem via rofi.
 # It will get both user/email and password from your pass entries.
+# rofi is a dmenu drop in replacement tool also available in package distrib.
+# rofi: sudo apt install rofi
 #
 # Rows are matched using regexp.
 #
-# It uses clipit as clipboard manager so the selected enrty is also in the
-# clipboard history.
+# It uses xclip the selected enrty is also in the clipboard history.
 #
 # - push entry to clipboard history
 # - copy user/email to SECONDARY
@@ -18,7 +19,7 @@
 # - if matched record hold an exec: row, the code is executed and the result
 #   pushed to clipboard
 
-# pass our entries files to dmenu
+# pass our entries files to rofi
 # result stored in PASSWORD_ENTRY
 lookup() {
   shopt -s nullglob globstar
@@ -28,7 +29,7 @@ lookup() {
   password_files=( "${password_files[@]#"$prefix"/}" )
   password_files=( "${password_files[@]%.gpg}" )
 
-  PASSWORD_ENTRY=$(printf '%s\n' "${password_files[@]}" | dmenu "$@")
+  PASSWORD_ENTRY=$(printf '%s\n' "${password_files[@]}" | rofi -dmenu -p "pass" "$@")
 
   if [[ -z $PASSWORD_ENTRY ]] ; then
     # not found
@@ -47,7 +48,7 @@ load_entry_to_clipboard() {
     local pass_entry="$1"
 
     # copy entry matched to clipboard
-    echo "pass show $pass_entry" | clipit
+    echo "pass show $pass_entry" | xclip -i -selection clipboard
 
     # looking for extra data
     local regexp1="user|email"
@@ -89,7 +90,7 @@ load_entry_to_clipboard() {
       local two_factor_code=$(oathtool --totp --base32 "$auth_code")
       if [[ -n $two_factor_code ]]
       then
-        echo "$two_factor_code" | clipit
+        echo "$two_factor_code" | xclip -i -selection clipboard
       fi
     else
       # pass will copy pass into clipboard (PRIMARY)
